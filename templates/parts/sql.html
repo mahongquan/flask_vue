@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+    <h3 align="center">sql</h3>
+    <form action="/sql/" method="get">
+        <textarea type="text" name="query" rows="10" cols="50" >
+        </textarea>
+        <input type="submit" value="go" />
+    </form>
+{% endblock %}
+

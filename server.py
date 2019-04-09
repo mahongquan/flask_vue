@@ -4,17 +4,35 @@ import backend_alchemy
 import sqlalchemy
 import logging
 import json
-from  myutil import MyEncoder
+import obj_sqlalchemy
 from obj_sqlalchemy import *
 import sys
 import traceback
 import datetime
 import os, os.path, json, shutil
+
 # app_root=os.path.normpath(mysite.settings.MEDIA_ROOT)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 app_root=os.path.normpath(BASE_DIR+os.path.sep+"static")
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
+class MyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        #logging.info(obj)
+        if isinstance(obj,datetime.date):
+            return "%d-%02d-%02d" % (obj.year,obj.month,obj.day)
+        if isinstance(obj,datetime.datetime):
+            return "%d-%02d-%02d" % (obj.year,obj.month,obj.day)
+        if isinstance(obj,obj_sqlalchemy.PartsItem):
+            return obj.name
+        if isinstance(obj,obj_sqlalchemy.PartsUsepack):
+            return obj.id
+        # if isinstance(obj,FieldFile):
+        #     #logging.info(dir(obj))
+        #     return obj.name
+        if isinstance(obj,obj_sqlalchemy.PartsContact):
+            return obj.hetongbh        
+        return json.JSONEncoder.default(self, obj)
 def getdb():
     if "db" in g:
         pass
@@ -41,8 +59,25 @@ def true_path(path,file):
         true+=file
     logging.info(true)
     return true
+@app.route('/rest/login_index')
+def login_index():
+    output={"csrf_token":"","success":True}
+    return json.dumps(output, ensure_ascii=False)
+@app.route('/rest/login', methods=[ 'POST'])
+def login_rest():
+    user={"name":"dummy user"}
+    output={"csrf_token":"","success":True,"data":user}
+    return json.dumps(output, ensure_ascii=False)
 @app.route('/')
 def index():
+    r=render_template("index.html")
+    return r
+@app.route('/rest/backbone')
+def backbone():
+    r=render_template("rest/backbone.html",user="user",csrf_token="")
+    return r
+@app.route('/test_login/')
+def test_login():
     # return redirect('/static/zxd/index.html')
     logging.info("index==============")
     # logging.info(session)
@@ -162,6 +197,11 @@ def year12():
         values.append(one[1])
     res={"success":True, "lbls":lbls,"values":values}
     return json.dumps(res, ensure_ascii=False) 
+@app.route("/parts/sql/", methods=['GET'])   
+def sql_index():
+    r=render_template("parts/sql.html")
+    return(r)
+
 @app.route("/parts/copypack/", methods=['GET','POST'])   
 def parts_copypack():
     if request.method == 'GET':
@@ -456,16 +496,18 @@ def mkdir(request):
     return     json.dumps({"status":"success"}, ensure_ascii=False) 
 @app.route('/sql/', methods=['GET'])
 def sql():
+    logging.info("sql==============================")
     db=getdb()
     logging.info(dir(db))
-    start=request.args.get("query","")
-    logging.info("query")
-    r=db.execute(start)
+    query=request.args.get("query","")
+    logging.info(query)
+    r=db.execute(query)
     logging.info(r)
-    fs=r.keys()
     try:
+        fs=r.keys()
         res=r.fetchall()
     except sqlalchemy.exc.ResourceClosedError as e:
+        logging.info(e);
         res=[]
         pass
     db.commit()#commit to avoid database is locked
@@ -928,24 +970,27 @@ def update_packItem():
     data = json.loads(request.get_data().decode("utf-8"))#extjs read data from body
     logging.info(data)
     id1=data.get("id")
+    db=getdb();
     if id1!=None:
          id1=int(id1)
-         item=Item.objects.get(id=int(data["itemid"]))
+         item= db.query(PartsItem).filter(PartsItem.id==int(data["item_id"])).one();
          item.bh=data.get("bh")
          item.danwei=data.get("danwei")
          item.name=data.get("name")
          item.guige=data.get("guige")
-         item.save()
-         rec=PackItem.objects.get(id=id1)
-         if data.get("pack")!=None:
-             rec.pack=Pack.objects.get(id=int(data["pack"]))
-         if data.get("itemid")!=None:
-             rec.item=item
+         # item.save()
+         # rec=PackItem.objects.get(id=id1)
+         rec=db.query(PartsPackitem).filter(PartsPackitem.id==id1).one();
+         if data.get("pack_id")!=None:
+             rec.pack_id=int(data["pack_id"])
+         if data.get("item_id")!=None:
+             rec.item_id=int(data.get("item_id"))
          if data.get("ct")!=None:
              rec.ct=float(data.get("ct"))
          if data.get("quehuo")!=None:
              rec.quehuo=data.get("quehuo")
-         rec.save()
+         # rec.save()
+         db.commit();
          output={"success":True,"message":"update Contact " +str(rec.id)}
          output["data"]=rec.json()
          return json.dumps(output, ensure_ascii=False,cls=MyEncoder)
@@ -1067,6 +1112,9 @@ def update_UsePackEx():
     output={"success":True,"message":"update UsePack " +str(rec.id)}
     output["data"]={"id":rec.id,"name":rec1.name,"contact":rec.contact.id}
     return json.dumps(output, ensure_ascii=False)
+@app.route('/favicon.ico')
+def favicon():
+    return redirect('/static/favicon.ico')
 
 def main():
     app.run(host = '127.0.0.1',port=8000,debug=True)

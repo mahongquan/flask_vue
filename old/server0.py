@@ -181,12 +181,9 @@ def items():
 #     rewepage["lcomow="]mynFte('/':
 # def hello():
 # F   returpage["n redir"]ect('/static/zxd/index.html')
-@app.route('/')
-def index():
-    return redirect('/static/zxd/index.html')
-# @app.route('/test')
-# def test():
-#     return "test"
+@app.route('/favicon.ico')
+def favicon():
+    return redirect('/static/favicon.ico')
 def toPath(p):
     return {"path": os.path.relpath(p, app_root),
             "name": os.path.basename(p),
