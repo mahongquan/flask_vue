@@ -1,0 +1,44 @@
+<html lang="zh-Hans">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+    <meta name="theme-color" content="#000000" />
+    <script
+      type="text/javascript"
+      src="../../node_modules/vue/dist/vue.js"
+    ></script>
+    <link
+      type="text/css"
+      rel="stylesheet"
+      href="../../node_modules/bootstrap/dist/css/bootstrap.css"
+    />
+    <script type="text/javascript" src="./jquery.js"></script>
+    <script>
+      if (typeof module === 'object') {
+        window.jQuery = window.$ = module.exports;
+      }
+    </script>
+    <script
+      type="text/javascript"
+      src="../../node_modules/popper.js/dist/umd/popper.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="../../node_modules/bootstrap/dist/js/bootstrap.js"
+    ></script>
+    <title>vue parts</title>
+  </head>
+  <body>
+    <noscript> You need to enable JavaScript to run this app. </noscript>
+    <div id="app">
+    </div>
+    <script type="text/javascript">
+      require('@babel/register');
+      require('@babel/polyfill');
+      require('./index_local.js');
+    </script>
+  </body>
+</html>

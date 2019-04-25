@@ -6,7 +6,16 @@
     <tbody>
       {% for f in files %} 
       <tr>
-        <td><a href="/explore/?path={{path}}&file={{f}}">{{f}}</a></td>
+        <td>
+{% if f.isdir %}
+     <span style="background-color: #8f0">
+{% endif %}
+            <a href="/explore/?path={{path}}&file={{f.name}}">{{f.name}}</a>
+{% if f.isdir %}
+     </span>
+{% endif %}
+
+        </td>
       </tr>
       {% endfor %}
   </tbody>

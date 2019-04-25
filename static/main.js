@@ -1,37 +1,3 @@
-{% extends "base.html" %} {% block extrahead %}
-<style type="text/css">
-  td {
-    padding: 3px 3px 3px 3px;
-  }
-  #page {
-    padding: 5px 5px 5px 5px;
-    /* background-color:green;*/
-  }
-  .contact_updatemethod {
-    margin: 1px 2px 1px 2px;
-  }
-  .contact_allfile {
-    margin: 1px 2px 1px 2px;
-  }
-  thead tr {
-    font-weight: bold;
-  }
-  .table_input {
-    background-color: green;
-  }
-  .newClass {
-    background-color: #8888ff;
-  }
-</style>
-<script
-  type="text/javascript"
-  src="/static/jquery-ui-1.11.4.custom/jquery-ui.js"
-></script>
-<script src="/static/backbone_parts/bootstrap3-typeahead.min.js"></script>
-<script src="/static/backbone_parts/json2.js"></script>
-<script src="/static/backbone_parts/underscore.js"></script>
-<script src="/static/backbone_parts/backbone.js"></script>
-<script type="text/javascript">
   var user = '{{ user }}';
   var csrf_token = '{{ csrf_token }}';
   var user = user || 'AnonymousUser';
@@ -355,7 +321,7 @@
           },
           close: function(event, ui) {
             $(this).dialog('destroy');
-          },
+          }
         });
       },
       uploadfile: function() {
@@ -633,7 +599,7 @@
         usepackListView.$('#auto_pack1').typeahead({});
       },
       edit: function() {
-        var editview = new ContactEditWithUsepackList({ model: this.model });
+        var editview = new ContactEditView({ model: this.model });
         editview.showdialog();
       },
       true_delete: function() {
@@ -662,7 +628,7 @@
       },
     });
     ///////////////////////////
-    var ContactEditWithUsepackList = Backbone.View.extend({
+    var ContactEditView2 = Backbone.View.extend({
       tagName: 'div',
       template: _.template(`
   <div id="id_contact_edit"></div>
@@ -789,7 +755,7 @@
         //  dlg.showdialog();
       },
       newcontact: function() {
-        var editview = new ContactEditWithUsepackList({ model: new Contact() });
+        var editview = new ContactEditView({ model: new Contact() });
         editview.showdialog();
       },
       mysearch: function() {
@@ -1235,7 +1201,8 @@
       <div style="padding: 5px 5px 50px 5px;min-height:350px">  <!-- leave margin to show autocomplete items -->
       <p>
       <!-- input id="auto_pack1" placeholder="输入包" style="border:solid #265a88" -->
-      <input type="text" id="auto_pack1"  placeholder="输入包"  style="border:solid #265a88" data-provide="typeahead" data-items="5" />
+      <input type="text" id="auto_pack1"  placeholder="输入包"  
+      style="border:solid #265a88" data-provide="typeahead" data-items="5" />
       <button  id="id_bibei_usepack">必备</button></p>
       <p>新包名称：<input id="new_pack1"  placeholder="新包" value="<%- hetongbh %>_选配"><button class="btn btn-info" id="id_new_usepack">新包</button></p>
       </div>
@@ -1971,114 +1938,3 @@
     });
     var App = new AppView();
   });
-</script>
-
-{% endblock %} {% block content %}
-
-<div id="todoapp">
-  <div id="dlg_delete" style="display: none">
-    <table>
-      <tr>
-        <td>是否确定?</td>
-      </tr>
-      <tr>
-        <td><button id="delete_ok">确定</button></td>
-        <td><button id="delete_cancel">取消</button></td>
-      </tr>
-    </table>
-  </div>
-  <div>
-    <table>
-      <tr>
-        <td>
-          <div class="dropdown">
-            <button
-              class="btn btn-default dropdown-toggle"
-              type="button"
-              id="dropdownMenu1"
-              data-toggle="dropdown"
-              aria-haspopup="true"
-              aria-expanded="true"
-            >
-              <span id="dropdownMenu1_text">Dropdown</span>
-              <span class="caret"></span>
-            </button>
-            <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
-              <li id="li_login" hidden="true">
-                <a href="#" id="id_login">登录</a>
-              </li>
-              <li id="li_logout"><a href="#" id="id_logout">注销</a></li>
-            </ul>
-          </div>
-        </td>
-        <td>
-          <input
-            type="text"
-            id="id_input_search"
-            placeholder="合同 or 仪器编号"
-            value=""
-          />
-          <button id="id_bt_search" class="btm btn-info">
-            搜索
-            <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
-          </button>
-          <button id="id_bt_new" class="btn btn-primary">新仪器</button>
-          <button id="id_bt_standard" class="btn btn-info">导入标样</button>
-        </td>
-        <td>
-          <div class="dropdown">
-            <button
-              class="btn btn-default dropdown-toggle"
-              type="button"
-              id="dropdownMenu2"
-              data-toggle="dropdown"
-              aria-haspopup="true"
-              aria-expanded="true"
-            >
-              <span id="dropdownMenu2_text">过滤</span>
-              <span class="caret"></span>
-            </button>
-            <ul class="dropdown-menu" aria-labelledby="dropdownMenu2">
-              <li><a href="#" class="baoxiang">马红权</a></li>
-              <li><a href="#" class="baoxiang">陈旺</a></li>
-              <li><a href="#" class="baoxiang">吴振宁</a></li>
-              <li><a href="#" class="baoxiang">周伟</a></li>
-              <li><a href="#" class="baoxiang">刘银凯</a></li>
-              <li>
-                <a href="#" class="baoxiang"
-                  ><span class="glyphicon glyphicon-asterisk"></span
-                ></a>
-              </li>
-            </ul>
-          </div>
-        </td>
-      </tr>
-    </table>
-  </div>
-  <div id="main" style="min-height:200px;">
-    <table class="table-bordered">
-      <thead>
-        <tr>
-          <td>ID</td>
-          <td>用户单位</td>
-          <td>客户地址</td>
-          <td>通道配置</td>
-          <td>仪器型号</td>
-          <td>仪器编号</td>
-          <td>包箱</td>
-          <td>审核</td>
-          <td>入库时间</td>
-          <td>调试时间</td>
-          <td>合同编号</td>
-          <td>方法</td>
-        </tr>
-      </thead>
-      <tbody id="contact-list"></tbody>
-    </table>
-    <a id="bt_prev">前一页</a> <label id="page">page/page</label>
-    <a id="bt_next">后一页</a>
-    <input id="page_input" value="1" maxlength="6" size="6" />
-    <button id="page_go" class="btn btn-info">跳转</button>
-  </div>
-</div>
-{% endblock %}

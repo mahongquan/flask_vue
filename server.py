@@ -13,7 +13,7 @@ import os, os.path, json, shutil
 
 # app_root=os.path.normpath(mysite.settings.MEDIA_ROOT)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-app_root=os.path.normpath(BASE_DIR+os.path.sep+"static")
+app_root=os.path.abspath(BASE_DIR+os.path.sep+"static")
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
 class MyEncoder(json.JSONEncoder):
@@ -39,26 +39,21 @@ def getdb():
     else:
         g.db=backend_alchemy.Session()
     return g.db
-# @app.route('/static/react1/build/index.html')
-# def index():
-#     return redirect(url_for('Contact'))
-# socketio = SocketIO(app)
-# @app.route('/path/<path:subpath>')
-# def show_subpath(subpath):
-#     # show the subpath after /path/
-#     return 'Subpath %s' % subpath、
 def file_url(path,file):
     logging.info(path)
-    url="/static/"+path+file
+    url="/static/"+path+"/"+file
     logging.info(url)
     return url
 def true_path(path,file):
     logging.info(path)
     true=app_root+"/"+path
     if file!=None:
-        true+=file
-    logging.info(true)
-    return true
+        true+="/"+file
+    true=os.path.abspath(true)
+    if app_root in true:
+        return true
+    else:
+        return app_root
 @app.route('/rest/login_index')
 def login_index():
     output={"csrf_token":"","success":True}
@@ -123,13 +118,19 @@ def explore():
     if os.path.isfile(filepath):
         r=redirect(file_url(path,file))
         return(r)
-    if file!=None:
-        path=path+file+"/"
-    files=os.listdir(true_path(path,None))
-    # output={"path":path,"files":files}
-    #return json.dumps(output, ensure_ascii=False))
-    r=render_template("explore/index.html",path=path,files=files)
-    return r
+    p=filepath
+    children = map(lambda x : os.path.join(p, x), os.listdir(p))
+    children = filter(lambda x : os.path.isfile(x) or os.path.isdir(x), children) 
+    children = map(lambda x : toPath(x), children)
+    files=list(children)
+    if(filepath!=app_root):
+        files.append({"name":"..","isdir":True})
+    logging.info("relpaht==========================================")
+    logging.info(filepath)
+    logging.info(app_root)
+    rpath=os.path.relpath(filepath,app_root)
+    logging.info(rpath)
+    return render_template("explore/index.html",path=rpath,files=files)
 @app.route('/extjs/angular/')
 def angular():
     # c={"user":request.user,"csrf_token":csrf(request)["csrf_token"]}
@@ -726,7 +727,7 @@ def destroy_usepack():
     output={"success":True,"message":"OK"}
     return json.dumps(output, ensure_ascii=False)
 
-@app.route('/rest/Pack/')    
+@app.route('/rest/Pack/', methods=['POST', 'GET','PUT','DELETE'])  
 def pack():
     logging.info("===================")
     logging.info(request)
@@ -794,7 +795,7 @@ def destroy_pack1(request):
     rec.delete()
     output={"success":True,"message":"OK"}
     return json.dumps(output, ensure_ascii=False)
-@app.route("/rest/Item/")
+@app.route("/rest/Item/", methods=['POST', 'GET','PUT','DELETE'])
 def item():
     logging.info("===================")
     logging.info(request)
@@ -831,13 +832,10 @@ def view_item():
     logging.info(data)
     out={"total":total,"data":data}
     return json.dumps(out, ensure_ascii=False,cls=MyEncoder)
-def create_item(request):
-    data = json.loads(request.get_data().decode("utf-8"))
-    #logging.info(data)
-    #data=request.POST
-    logging.info(data)
-    requestPOST=data
-    rec=Item()
+def create_item():
+    requestPOST = json.loads(request.get_data().decode("utf-8"))
+    db=getdb();
+    rec=PartsItem()
     if requestPOST.get("bh")!=None:
         rec.bh=requestPOST["bh"]
     if requestPOST.get("name")!=None:
@@ -846,11 +844,16 @@ def create_item(request):
         rec.guige=requestPOST["guige"]
     if requestPOST.get("danwei")!=None:
         rec.danwei=requestPOST["danwei"]
-    rec.save()
+    if requestPOST.get("ct")!=None:
+        rec.ct=requestPOST["ct"]
+    else:
+        rec.ct=1
+    db.add(rec)
+    db.commit()
     output={"success":True,"message":"Created new User" +str(rec.id)}
     output["data"]={"id":rec.id,"bh":rec.bh,"name":rec.name,"guige":rec.guige,"danwei":rec.danwei}
     return json.dumps(output, ensure_ascii=False)
-def update_item(request):
+def update_item():
     requestPOST = json.loads(request.get_data().decode("utf-8"))
     id1=int(requestPOST["id"])
     rec=Item.objects.get(id=id1)
@@ -862,7 +865,7 @@ def update_item(request):
         rec.guige=requestPOST["guige"]
     if requestPOST.get("danwei")!=None:
         rec.danwei=requestPOST["danwei"]
-    rec.save()
+    db.commit()
     output={"success":True,"message":"update item " +str(rec.id)}
     output["data"]={"id":rec.id,"bh":rec.bh,"name":rec.name,"guige":rec.guige,"danwei":rec.danwei}
     return json.dumps(output, ensure_ascii=False)
@@ -872,11 +875,13 @@ def update_item(request):
         data.append({"id":rec.id,"hetongbh":rec.hetongbh,"yujifahuo_date":rec.yujifahuo_date,"yonghu":rec.yonghu,"baoxiang":rec.baoxiang})
     output={"data":data}
     return json.dumps(output, ensure_ascii=False)
-def destroy_item(request):
+def destroy_item():
     requestPOST = json.loads(request.get_data().decode("utf-8"))
     id1=int(requestPOST["id"])
-    rec=Item.objects.get(id=id1)
-    rec.delete()
+    db=getdb()
+    rec=db.query(PartsItem).filter(PartsItem.id==id1).one()
+    db.delete(rec);
+    db.commit()
     output={"success":True,"message":"OK"}
     return json.dumps(output, ensure_ascii=False)
 # @app.route("/rest/UsePackEx/")    
